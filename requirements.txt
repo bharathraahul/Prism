@@ -1,0 +1,6 @@
+streamlit
+requests
+boto3
+pillow
+streamlit-image-comparison
+python-dotenv
