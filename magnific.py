@@ -1,7 +1,10 @@
-"""Magnific (Freepik) Creative Upscaler: scene-shifting variants that preserve product identity.
+"""Magnific Creative Upscaler client: scene-shifting variants that preserve product identity.
 
-NOTE: Confirm endpoint paths against current Freepik docs before the demo:
-https://docs.freepik.com — the image-upscaler endpoint and payload occasionally change.
+Verified against https://docs.magnific.com (June 2026):
+- POST https://api.magnific.com/v1/ai/image-upscaler  (JSON, base64 image)
+- GET  https://api.magnific.com/v1/ai/image-upscaler/{task_id}  (poll)
+- Auth header: x-magnific-api-key
+- Status enum: CREATED | IN_PROGRESS | COMPLETED | FAILED
 """
 import base64
 import io
@@ -11,8 +14,7 @@ import time
 import requests
 from PIL import Image
 
-FREEPIK_KEY = os.getenv("FREEPIK_API_KEY", "")
-BASE_URL = "https://api.freepik.com/v1/ai/image-upscaler"
+BASE_URL = "https://api.magnific.com/v1/ai/image-upscaler"
 POLL_INTERVAL_S = 3
 TIMEOUT_S = 300  # give up after 5 min, demo uses cached assets anyway
 
@@ -21,9 +23,10 @@ IDENTITY_PREFIX = "Exact same product, unchanged, identical label and details. "
 
 
 def _headers():
-    if not FREEPIK_KEY:
-        raise RuntimeError("FREEPIK_API_KEY not set")
-    return {"x-freepik-api-key": FREEPIK_KEY}
+    key = os.getenv("MAGNIFIC_API_KEY") or os.getenv("FREEPIK_API_KEY", "")
+    if not key:
+        raise RuntimeError("MAGNIFIC_API_KEY (or FREEPIK_API_KEY) not set")
+    return {"x-magnific-api-key": key, "Content-Type": "application/json"}
 
 
 def resize_for_upload(image_bytes: bytes, max_px: int = 1024) -> bytes:
@@ -35,17 +38,22 @@ def resize_for_upload(image_bytes: bytes, max_px: int = 1024) -> bytes:
     return buf.getvalue()
 
 
-def magnific_variant(image_bytes: bytes, prompt: str, creativity: int = 6) -> str:
+def magnific_variant(image_bytes: bytes, prompt: str,
+                     creativity: int = 6, resemblance: int = 3) -> str:
     """Submit one variant job, poll to completion, return the generated image URL.
 
     creativity: 5-6 shifts the scene; drop to 4 if product identity drifts,
-    bump to 7 if the scene shift looks too weak.
+                bump to 7 if the scene shift looks too weak.
+    resemblance: positive values pull the result toward the original image —
+                 raise it (instead of only lowering creativity) if the product drifts.
     """
     payload = {
         "image": base64.b64encode(image_bytes).decode(),
         "prompt": IDENTITY_PREFIX + prompt,
         "scale_factor": "2x",
+        "optimized_for": "standard",
         "creativity": creativity,
+        "resemblance": resemblance,
         "hdr": 2,
         "engine": "magnific_sparkle",
     }

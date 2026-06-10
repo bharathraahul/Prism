@@ -24,6 +24,7 @@ streamlit run app.py --server.port 8501
 ```
 app.py             Streamlit demo UI (reads cached variants only)
 generate.py        One-shot pipeline: photo → variants → regional buckets
+upload_local.py    Fallback: push manually-generated variants to buckets
 claude_prompts.py  OpenAI context matrix (with hardcoded fallback prompts)
 magnific.py        Freepik/Magnific Creative Upscaler client
 storage.py         Regional bucket uploads + healthcheck

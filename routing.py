@@ -1,4 +1,5 @@
 """Visitor profile -> regional edge routing, plus live latency measurement."""
+import os
 import subprocess
 
 VISITOR_PROFILES = {
@@ -10,17 +11,17 @@ VISITOR_PROFILES = {
     "london_evening": {
         "region_key": "europe_evening",
         "context": "London, 7pm GMT, autumn",
-        "edge": "Frankfurt",
+        "edge": os.getenv("PRISM_EU_LABEL", "Seattle"),  # EU zone skipped for now
     },
     "tokyo_night": {
         "region_key": "asia_night",
         "context": "Tokyo, 11pm JST, autumn",
-        "edge": "Singapore",
+        "edge": "Chennai",
     },
-    "sydney_sunset": {
+    "mumbai_night": {
         "region_key": "asia_night",  # reuse asia variant
-        "context": "Sydney, 6pm AEST, spring",
-        "edge": "Singapore",
+        "context": "Mumbai, 10pm IST, pre-monsoon",
+        "edge": "Chennai",
     },
 }
 
